@@ -164,7 +164,7 @@ To prevent database bloat and manage stale catalog states, the system implements
 ### Implementation Details
 - **TTL Index**: An expiration index is registered on the `expiresAt` property in the `Cart` model using Mongoose's schema options: `expiresAt: { type: Date, index: { expires: 0 } }`.
 - **Mutation Refresh**: Any mutating write operation on a user's active cart (`addItemToCart`, `updateItemQuantity`, `removeItem`, `clearCart`) resets the cart's lifespan. The `expiresAt` field is set to:
-  $$\text{expiresAt} = \text{Date.now()} + (\text{CART\_TTL\_HOURS} \times 60 \times 60 \times 1000)$$
+   " $$\text{expiresAt} = \text{Date.now()} + (\text{CART\_TTL\_HOURS} \times 60 \times 60 \times 1000)$$ "
 - **Read Preservation**: Reading an existing cart (via `getOrCreateCart` or `GET /cart`) does not extend the lifespan. This preserves resources by allowing abandoned carts to expire naturally.
 - **Checkout Persistence**: Confirming checkout removes the TTL tracker (`cart.expiresAt = undefined`) immediately before changing status to `'checked_out'`, ensuring checked-out orders are retained as permanent records.
 
