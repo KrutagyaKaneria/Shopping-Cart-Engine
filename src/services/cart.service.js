@@ -3,12 +3,26 @@ const productService = require('./product.service');
 const ApiError = require('../utils/ApiError');
 
 /**
+ * Helper to compute the expiration timestamp using CART_TTL_HOURS from the environment.
+ */
+const computeExpiresAt = () => {
+  const ttlHours = Number(process.env.CART_TTL_HOURS || 24);
+  return new Date(Date.now() + ttlHours * 60 * 60 * 1000);
+};
+
+/**
  * Finds the active cart for a user. If none exists, creates a new active cart.
+ * Sets the initial expiration window for newly created carts.
  */
 const getOrCreateCart = async (userId) => {
   let cart = await Cart.findOne({ userId, status: 'active' });
   if (!cart) {
-    cart = await Cart.create({ userId, items: [], status: 'active' });
+    cart = await Cart.create({
+      userId,
+      items: [],
+      status: 'active',
+      expiresAt: computeExpiresAt()
+    });
   }
   return cart;
 };
@@ -54,6 +68,7 @@ const addItemToCart = async (userId, productId, quantity) => {
     });
   }
 
+  cart.expiresAt = computeExpiresAt();
   await cart.save();
   return cart;
 };
@@ -78,6 +93,7 @@ const updateItemQuantity = async (userId, itemId, quantity) => {
   productService.assertSufficientStock(product, quantity);
 
   item.quantity = quantity;
+  cart.expiresAt = computeExpiresAt();
   await cart.save();
   return cart;
 };
@@ -97,6 +113,7 @@ const removeItem = async (userId, itemId) => {
   }
 
   cart.items.pull(itemId);
+  cart.expiresAt = computeExpiresAt();
   await cart.save();
   return cart;
 };
@@ -111,6 +128,7 @@ const clearCart = async (userId) => {
   }
 
   cart.items = [];
+  cart.expiresAt = computeExpiresAt();
   await cart.save();
   return cart;
 };

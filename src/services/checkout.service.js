@@ -78,6 +78,8 @@ const confirmCheckout = async (userId) => {
   const checkoutSummary = await buildCheckoutSummary(userId);
 
   cart.status = 'checked_out';
+  // Clear expiresAt so that checked-out/confirmed carts are not deleted by the TTL monitor
+  cart.expiresAt = undefined;
   await cart.save();
 
   return {

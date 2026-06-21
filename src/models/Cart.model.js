@@ -60,8 +60,10 @@ const cartSchema = new mongoose.Schema(
       default: 'active',
       index: true
     },
+    // MongoDB's background TTL monitor removes the document once expiresAt is in the past; actual future offset is computed in cart.service.js using process.env.CART_TTL_HOURS.
     expiresAt: {
-      type: Date
+      type: Date,
+      index: { expires: 0 }
     }
   },
   {
