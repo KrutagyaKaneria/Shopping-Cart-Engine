@@ -7,13 +7,14 @@ const cors = require('cors');
 const morgan = require('morgan');
 const logger = require('./src/utils/logger');
 const routes = require('./src/routes');
+const { globalLimiter } = require('./src/middleware/rateLimiter.middleware');
 const notFoundMiddleware = require('./src/middleware/notFound.middleware');
 const errorHandlerMiddleware = require('./src/middleware/errorHandler.middleware');
 
 const app = express();
 
 app.use(helmet());
-app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
+app.use(cors({ origin: process.env.CORS_ORIGIN }));
 app.use(express.json());
 
 // Stream morgan log messages into our custom winston logger
@@ -25,8 +26,8 @@ app.use(
   })
 );
 
-// Mount versioned API routes
-app.use('/api/v1', routes);
+// Mount versioned API routes with global rate limiting applied
+app.use('/api/v1', globalLimiter, routes);
 
 // Fallback for non-existent route paths
 app.use(notFoundMiddleware);
